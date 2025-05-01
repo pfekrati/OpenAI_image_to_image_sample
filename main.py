@@ -3,6 +3,8 @@ import os
 import base64
 import requests
 from dotenv import load_dotenv
+from PIL import Image
+import io
 
 # Azure Foundry GPT-Image-1 endpoint and API key (replace with your actual values)
 # Load environment variables from .env file
@@ -27,14 +29,27 @@ uploaded_files = st.file_uploader(
     "Upload one or more images", type=["png", "jpg", "jpeg"], accept_multiple_files=True
 )
 
-# Display thumbnails for uploaded images
+# Display thumbnails for uploaded images in a grid (3 per row)
 if uploaded_files:
-    st.write("Uploaded images:")
-    thumbnail_cols = st.columns(min(len(uploaded_files), 4))  # Create columns for thumbnails
-    for i, file in enumerate(uploaded_files):
-        with thumbnail_cols[i % 4]:  # Use modulo to cycle through columns
-            # Display a small thumbnail
-            st.image(file, caption=file.name, width=100)
+    st.write("### Uploaded images")
+    
+    # Create rows of 3 images each
+    for i in range(0, len(uploaded_files), 3):
+        # Create columns for each row
+        cols = st.columns(3)
+        
+        # Fill each column with an image if available
+        for j in range(3):
+            if i + j < len(uploaded_files):
+                with cols[j]:
+                    file = uploaded_files[i + j]
+                    img = Image.open(file)
+                    # Calculate thumbnail width and height as 50% of original
+                    thumbnail_width = img.width // 2
+                    file.seek(0)  # Reset file pointer
+                    st.image(file, caption=file.name, width=thumbnail_width)
+                    # Show image dimensions as additional info
+                    st.caption(f"Dimensions: {img.width}x{img.height}")
             
 instruction = st.text_area("Describe the image you want to generate")
 
@@ -62,7 +77,11 @@ if st.button("Generate Image"):
                 # Add the model and prompt to the form data
                 data = {
                     "model": "gpt-image-1",
-                    "prompt": instruction
+                    "prompt": instruction,
+                    "n": 3
+                    # ,"output_compression": 80,
+                    # "quality": "high",
+                    # "output_format":"jpeg"
                 }
 
                 # Make the API call
@@ -77,11 +96,28 @@ if st.button("Generate Image"):
                 if response.status_code == 200:
                     # Parse the JSON response
                     response_data = response.json()
-                    image_base64 = response_data['data'][0]['b64_json']
-                    image_bytes = base64.b64decode(image_base64)
+
+                    print(response_data)  # Debugging line to check the response structure
                     
-                    # Display the generated image
-                    st.image(image_bytes, caption="Generated Image")
+                    # Create a header for the generated images
+                    st.write("### Generated Images")
+                    
+                    # Create 3 columns for the images
+                    cols = st.columns(3)
+                    
+                    # Display each generated image in its own column
+                    for i, img_data in enumerate(response_data['data']):
+                        image_base64 = img_data['b64_json']
+                        image_bytes = base64.b64decode(image_base64)
+                        
+                        # Create a temporary PIL Image to get dimensions
+                        pil_img = Image.open(io.BytesIO(image_bytes))
+                        # Calculate width as 50% of original
+                        width = pil_img.width // 2
+                        
+                        # Display in the appropriate column
+                        with cols[i]:
+                            st.image(image_bytes, caption=f"Generated Image {i+1}", width=width)
                 else:
                     st.error(f"API Error: {response.status_code} - {response.text}")
                     
