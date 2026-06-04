@@ -17,13 +17,22 @@ Create a `.env` file in the project root and add the following variables:
 
 ```env
 AZURE_ENDPOINT=https://<your-endpoint>/openai/deployments/<deployment-name>/images/edits?api-version=2025-04-01-preview
-API_KEY=<your-api-key>
 ```
 
 > **Note:**  
 > The endpoint used is for **image editing** (`edits`), not image generation.
 
-### 3. Set Up a Virtual Environment
+### 3. Sign in with Azure Default Credentials
+
+This sample uses Azure default credentials instead of an API key. Sign in with one of the supported credential sources, for example:
+
+```bash
+az login
+```
+
+Ensure the signed-in identity has permission to call the Azure OpenAI resource.
+
+### 4. Set Up a Virtual Environment
 
 It is recommended to use a virtual environment:
 
@@ -35,7 +44,7 @@ venv\Scripts\activate
 source venv/bin/activate
 ```
 
-### 4. Install Dependencies
+### 5. Install Dependencies
 
 Install all required packages from `requirements.txt`:
 
@@ -43,7 +52,7 @@ Install all required packages from `requirements.txt`:
 pip install -r requirements.txt
 ```
 
-### 5. Run the Application
+### 6. Run the Application
 
 Start the Streamlit app:
 
@@ -56,7 +65,7 @@ streamlit run main.py
 ## Notes
 
 - Ensure your Azure OpenAI resource is properly configured.
-- Do **not** share your `.env` file or API keys publicly.
+- Do **not** share your `.env` file publicly.
 
 ---
 
